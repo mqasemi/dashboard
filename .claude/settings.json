@@ -1,0 +1,12 @@
+{
+  "env": {
+
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+    "AANTHROPIC_MODEL": "claude-opus-4-6"
+    
+  },
+  "model": "opus",
+  "effortLevel": "low",
+  "theme": "dark",
+  "switchModelsOnFlag": false
+}
