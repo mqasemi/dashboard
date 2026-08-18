@@ -1,0 +1,115 @@
+<h3>Register</h3>
+<form nz-form [formGroup]="form" (ngSubmit)="submit()" role="form">
+  @if (error) {
+    <nz-alert [nzType]="'error'" [nzMessage]="error" [nzShowIcon]="true" class="mb-lg" />
+  }
+  <nz-form-item>
+    <nz-form-control [nzErrorTip]="mailErrorTip">
+      <nz-input-group nzSize="large" nzAddonBeforeIcon="user">
+        <input nz-input formControlName="mail" placeholder="Email" />
+      </nz-input-group>
+      <ng-template #mailErrorTip let-i>
+        @if (i.errors?.required) {
+          Please enter your email!
+        }
+        @if (i.errors?.email) {
+          The email address is in the wrong format!
+        }
+      </ng-template>
+    </nz-form-control>
+  </nz-form-item>
+  <nz-form-item>
+    <nz-form-control [nzErrorTip]="'Please enter your password!'">
+      <nz-input-group
+        nzSize="large"
+        nzAddonBeforeIcon="lock"
+        nz-popover
+        nzPopoverPlacement="right"
+        nzPopoverTrigger="focus"
+        [(nzPopoverVisible)]="visible"
+        nzPopoverOverlayClassName="register-password-cdk"
+        [nzPopoverOverlayStyle]="{ 'width.px': 240 }"
+        [nzPopoverContent]="pwdCdkTpl"
+      >
+        <input nz-input type="password" formControlName="password" placeholder="Password" />
+      </nz-input-group>
+      <ng-template #pwdCdkTpl>
+        <div style="padding: 4px 0">
+          @switch (status) {
+            @case ('ok') {
+              <div class="success">Strength: strong</div>
+            }
+            @case ('pass') {
+              <div class="warning">Strength: medium</div>
+            }
+            @default {
+              <div class="error">Strength: too short</div>
+            }
+          }
+          <div class="progress-{{ status }}">
+            <nz-progress [nzPercent]="progress" [nzStatus]="passwordProgressMap[status]" [nzStrokeWidth]="6" [nzShowInfo]="false" />
+          </div>
+          <p class="mt-sm">Please enter at least 6 characters and don't use passwords that are easy to guess.</p>
+        </div>
+      </ng-template>
+    </nz-form-control>
+  </nz-form-item>
+  <nz-form-item>
+    <nz-form-control [nzErrorTip]="confirmErrorTip">
+      <nz-input-group nzSize="large" nzAddonBeforeIcon="lock">
+        <input nz-input type="password" formControlName="confirm" placeholder="Confirm Password" />
+      </nz-input-group>
+      <ng-template #confirmErrorTip let-i>
+        @if (i.errors?.required) {
+          Please confirm your password!
+        }
+        @if (i.errors?.matchControl) {
+          The passwords entered twice do not match!
+        }
+      </ng-template>
+    </nz-form-control>
+  </nz-form-item>
+  <nz-form-item>
+    <nz-form-control [nzErrorTip]="mobileErrorTip">
+      <nz-input-group nzSize="large" [nzAddOnBefore]="addOnBeforeTemplate">
+        <ng-template #addOnBeforeTemplate>
+          <nz-select formControlName="mobilePrefix" style="width: 100px">
+            <nz-option [nzLabel]="'+86'" [nzValue]="'+86'" />
+            <nz-option [nzLabel]="'+87'" [nzValue]="'+87'" />
+          </nz-select>
+        </ng-template>
+        <input formControlName="mobile" nz-input placeholder="Phone number" />
+      </nz-input-group>
+      <ng-template #mobileErrorTip let-i>
+        @if (i.errors?.required) {
+          Please enter your phone number!
+        }
+        @if (i.errors?.pattern) {
+          Malformed phone number!
+        }
+      </ng-template>
+    </nz-form-control>
+  </nz-form-item>
+  <nz-form-item>
+    <nz-form-control [nzErrorTip]="'Please enter the verification code!'">
+      <div nz-row [nzGutter]="8">
+        <div nz-col [nzSpan]="16">
+          <nz-input-group nzSize="large" nzAddonBeforeIcon="mail">
+            <input nz-input formControlName="captcha" placeholder="Captcha" />
+          </nz-input-group>
+        </div>
+        <div nz-col [nzSpan]="8">
+          <button type="button" nz-button nzSize="large" (click)="getCaptcha()" [disabled]="count > 0" nzBlock [nzLoading]="loading">
+            {{ count ? count + 's' : ('Get code') }}
+          </button>
+        </div>
+      </div>
+    </nz-form-control>
+  </nz-form-item>
+  <nz-form-item>
+    <button nz-button nzType="primary" nzSize="large" type="submit" [nzLoading]="loading" class="submit">
+      Register
+    </button>
+    <a class="login" routerLink="/passport/login">Already have an account?</a>
+  </nz-form-item>
+</form>
