@@ -7,4 +7,20 @@
 
 // ==========The following is the custom theme variable area==========
 // The theme paraments can be generated at https://ng-alain.github.io/ng-alain/
-// @primary-color: #f50;
+
+// --- Brand -------------------------------------------------------------------
+// Single brand colour per CLAUDE.md; no other saturated colours.
+@primary-color: #1890ff;
+
+// --- Typography --------------------------------------------------------------
+// Vazirmatn is the Persian face (see `styles/index.less` for the @font-face rule).
+// The Latin fallbacks keep numerals, code and English brand names legible.
+@font-family: 'Vazirmatn', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+@code-family: 'Cascadia Code', Consolas, Menlo, Courier, monospace;
+
+// Persian glyphs sit lower and need a little more line height than Latin ones.
+@line-height-base: 1.8;
+
+// --- Surfaces ----------------------------------------------------------------
+// Subtle borders and generous whitespace, per the enterprise-minimal design tone.
+@border-radius-base: 4px;

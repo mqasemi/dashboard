@@ -1,116 +1,110 @@
 import { MockRequest } from '@delon/mock';
 
-const list: any[] = [];
+/** Shape of a mocked user row; Step 6 replaces this with the real `User` model. */
+interface MockUser {
+  id: number;
+  disabled: boolean;
+  avatar: string;
+  no: string;
+  title: string;
+  owner: string;
+  description: string;
+  callNo: number;
+  status: number;
+  updatedAt: Date;
+  createdAt: Date;
+  progress: number;
+}
+
+interface MockUserQuery {
+  pi?: string;
+  ps?: string;
+  no?: string;
+}
+
+const FIRST_NAMES = ['علی', 'زهرا', 'محمد', 'فاطمه', 'رضا', 'مریم', 'حسین', 'سارا', 'امیر', 'نگار'];
+const LAST_NAMES = ['محمدی', 'حسینی', 'رضایی', 'کریمی', 'موسوی', 'احمدی', 'صادقی', 'نوری', 'قاسمی', 'شریفی'];
+
+const list: MockUser[] = [];
 const total = 50;
 
 for (let i = 0; i < total; i += 1) {
   list.push({
     id: i + 1,
     disabled: i % 6 === 0,
-    href: 'https://ant.design',
-    avatar: [
-      'https://gw.alipayobjects.com/zos/rmsportal/eeHMaZBwmTvLdIwMfBpg.png',
-      'https://gw.alipayobjects.com/zos/rmsportal/udxAbMEhpwthVVcjLXik.png'
-    ][i % 2],
-    no: `TradeCode ${i}`,
-    title: `一个任务名称 ${i}`,
-    owner: '曲丽丽',
-    description: '这是一段描述',
-    callNo: Math.floor(Math.random() * 1000),
-    status: Math.floor(Math.random() * 10) % 4,
-    updatedAt: new Date(`2017-07-${Math.floor(i / 2) + 1}`),
-    createdAt: new Date(`2017-07-${Math.floor(i / 2) + 1}`),
-    progress: Math.ceil(Math.random() * 100)
+    avatar: './assets/tmp/img/avatar.jpg',
+    no: `USR-${String(i + 1).padStart(4, '0')}`,
+    title: `${FIRST_NAMES[i % FIRST_NAMES.length]} ${LAST_NAMES[i % LAST_NAMES.length]}`,
+    owner: 'مدیر سیستم',
+    description: 'کاربر نمونه برای آزمون فهرست‌ها و فرم‌ها',
+    callNo: (i * 37) % 1000,
+    status: i % 4,
+    // Deterministic dates so the mock output is stable between reloads
+    updatedAt: new Date(2026, 0, (i % 28) + 1),
+    createdAt: new Date(2025, 5, (i % 28) + 1),
+    progress: ((i * 7) % 100) + 1
   });
 }
 
-function genData(params: any): { total: number; list: any[] } {
+function genData(params: MockUserQuery): { total: number; list: MockUser[] } {
   let ret = [...list];
-  const pi = +params.pi;
-  const ps = +params.ps;
+  const pi = +(params.pi ?? 1);
+  const ps = +(params.ps ?? 10);
   const start = (pi - 1) * ps;
 
   if (params.no) {
-    ret = ret.filter(data => data.no.indexOf(params.no) > -1);
+    ret = ret.filter(data => data.no.indexOf(params.no!) > -1);
   }
 
   return { total: ret.length, list: ret.slice(start, ps * pi) };
 }
 
-function saveData(id: number, value: any): { msg: string } {
+function saveData(id: number, value: Partial<MockUser>): { msg: string } {
   const item = list.find(w => w.id === id);
   if (!item) {
-    return { msg: '无效用户信息' };
+    return { msg: 'کاربر یافت نشد.' };
   }
   Object.assign(item, value);
   return { msg: 'ok' };
 }
 
 export const USERS = {
-  '/user': (req: MockRequest) => genData(req.queryString),
+  '/user': (req: MockRequest) => genData(req.queryString as MockUserQuery),
   '/user/:id': (req: MockRequest) => list.find(w => w.id === +req.params.id),
-  'POST /user/:id': (req: MockRequest) => saveData(+req.params.id, req.body),
+  'POST /user/:id': (req: MockRequest) => saveData(+req.params.id, req.body as Partial<MockUser>),
   '/user/current': {
-    name: 'Cipchk',
-    avatar: 'https://gw.alipayobjects.com/zos/rmsportal/BiazfanxmamNRoxxVxka.png',
+    name: 'مدیر سیستم',
+    avatar: './assets/tmp/img/avatar.jpg',
     userid: '00000001',
-    email: 'cipchk@qq.com',
-    signature: '海纳百川，有容乃大',
-    title: '交互专家',
-    group: '蚂蚁金服－某某某事业群－某某平台部－某某技术部－UED',
+    email: 'admin@example.com',
+    signature: 'مدیریت یکپارچهٔ سامانه',
+    title: 'مدیر ارشد',
+    group: 'واحد فناوری اطلاعات',
     tags: [
-      {
-        key: '0',
-        label: '很有想法的'
-      },
-      {
-        key: '1',
-        label: '专注撩妹'
-      },
-      {
-        key: '2',
-        label: '帅~'
-      },
-      {
-        key: '3',
-        label: '通吃'
-      },
-      {
-        key: '4',
-        label: '专职后端'
-      },
-      {
-        key: '5',
-        label: '海纳百川'
-      }
+      { key: '0', label: 'مدیر' },
+      { key: '1', label: 'دسترسی کامل' }
     ],
     notifyCount: 12,
-    country: 'China',
+    country: 'ایران',
     geographic: {
-      province: {
-        label: '上海',
-        key: '330000'
-      },
-      city: {
-        label: '市辖区',
-        key: '330100'
-      }
+      province: { label: 'تهران', key: 'THR' },
+      city: { label: 'تهران', key: 'THR-01' }
     },
-    address: 'XX区XXX路 XX 号',
-    phone: '你猜-你猜你猜猜猜'
+    address: 'تهران، خیابان نمونه، پلاک ۱',
+    phone: '021-00000000'
   },
   'POST /user/avatar': 'ok',
   'POST /login/account': (req: MockRequest) => {
     const data = req.body;
     if (!(data.userName === 'admin' || data.userName === 'user') || data.password !== 'ng-alain.com') {
-      return { msg: `Invalid username or password（admin/ng-alain.com）` };
+      return { msg: 'نام کاربری یا گذرواژه نامعتبر است (admin / ng-alain.com)' };
     }
     return {
       msg: 'ok',
       user: {
         token: '123456789',
         name: data.userName,
-        email: `${data.userName}@qq.com`,
+        email: `${data.userName}@example.com`,
         id: 10000,
         time: +new Date()
       }

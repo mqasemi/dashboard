@@ -13,6 +13,13 @@ export default {
   rules: {
     'function-no-unknown': null,
     'no-descending-specificity': null,
+    // The codebase (and @delon/ng-zorro, whose classes we override) is BEM: `block__element--modifier`.
+    // The standard config's kebab-case default rejects `__` and `--`, so widen it to BEM instead of
+    // sprinkling disable comments over every override.
+    'selector-class-pattern': [
+      '^[a-z][a-z0-9]*(-[a-z0-9]+)*(__[a-z][a-z0-9]*(-[a-z0-9]+)*)?(--[a-z][a-z0-9]*(-[a-z0-9]+)*)?$',
+      { message: selector => `Expected class selector "${selector}" to be kebab-case or BEM` }
+    ],
     'plugin/declaration-block-no-ignored-properties': true,
     'selector-type-no-unknown': [
       true,

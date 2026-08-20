@@ -15,10 +15,17 @@
       width: 50%;
     }
 
+    /* Pushed to the trailing edge; see the `[dir='rtl']` override below. */
     .login {
       float: right;
       line-height: @btn-height-lg;
     }
+  }
+}
+
+[dir='rtl'] {
+  :host ::ng-deep .login {
+    float: left;
   }
 }
 

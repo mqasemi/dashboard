@@ -8,21 +8,6 @@
     background: #f0f2f5;
   }
 
-  .langs {
-    width: 100%;
-    height: 40px;
-    line-height: 44px;
-    text-align: right;
-
-    .anticon {
-      cursor: pointer;
-      margin-top: 24px;
-      margin-right: 24px;
-      font-size: 14px;
-      vertical-align: top;
-    }
-  }
-
   .wrap {
     flex: 1;
     padding: 32px 0;
@@ -49,12 +34,16 @@
 
   .logo {
     height: 44px;
-    margin-right: 16px;
+
+    /* Logical, so the gap stays between the logo and the title in both directions. */
+    margin-inline-end: 16px;
   }
 
+  /* No `font-family` here on purpose: the scaffold hardcoded a Latin-only stack ('Myriad
+     Pro', Helvetica…), which made the Persian title fall back to a system font. Inheriting
+     `@font-family` gives it Vazirmatn. */
   .title {
     position: relative;
-    font-family: 'Myriad Pro', 'Helvetica Neue', Arial, Helvetica, sans-serif;
     font-size: 33px;
     font-weight: 600;
     color: @heading-color;
@@ -68,14 +57,10 @@
     color: @text-color-secondary;
   }
 
+  /* The scaffold also pulled a decorative `.container` background from a remote CDN
+     (gw.alipayobjects.com) at this breakpoint. Dropped: it defeats offline PWA support and
+     adds a third-party request to the login page. */
   @media (min-width: @screen-md-min) {
-    .container {
-      background-image: url('https://gw.alipayobjects.com/zos/rmsportal/TVYTbAXWheQpRcWDaDMu.svg');
-      background-repeat: no-repeat;
-      background-position: center 110px;
-      background-size: 100%;
-    }
-
     .wrap {
       padding: 32px 0 24px;
     }
@@ -94,12 +79,6 @@
 
     .desc {
       color: fade(@white, 45%);
-    }
-
-    @media (min-width: @screen-md-min) {
-      .container {
-        background-image: none;
-      }
     }
   }
 }

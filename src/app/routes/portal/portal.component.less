@@ -1,0 +1,142 @@
+/* Windows-8-style tile grid for the portal layout mode.
+ *
+ * Component-scoped because nothing outside the portal route renders tiles. Uses `@delon`'s theme
+ * variables so the tiles pick up the same brand colour, radius and borders as the rest of the app
+ * (see `styles/theme.less`).
+ *
+ * Logical properties (`inline-start`, `padding-inline`) rather than left/right throughout, so the
+ * grid needs no `[dir='rtl']` overrides.
+ */
+@import '@delon/theme/index';
+
+.portal {
+  display: flex;
+  flex-direction: column;
+  max-width: 1200px;
+  min-height: 100%;
+  margin: 0 auto;
+  padding: (@layout-gutter * 4) @layout-gutter * 3;
+
+  &__head {
+    display: flex;
+    gap: @layout-gutter * 2;
+    align-items: center;
+    margin-bottom: @layout-gutter * 4;
+  }
+
+  &__logo {
+    height: 32px;
+  }
+
+  &__title {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 500;
+    color: @heading-color;
+  }
+
+  &__group {
+    margin-bottom: @layout-gutter * 4;
+  }
+
+  &__group-title {
+    margin-bottom: @layout-gutter * 2;
+    font-size: 13px;
+    font-weight: normal;
+    color: @text-color-secondary;
+  }
+
+  &__empty {
+    color: @text-color-secondary;
+  }
+
+  /* --- Tiles ---------------------------------------------------------------
+   * `aspect-ratio` keeps them square at every breakpoint without the padding-top
+   * hack, so the icon can simply be centred.
+   */
+  &__tile {
+    display: flex;
+    flex-direction: column;
+    gap: @layout-gutter;
+    align-items: center;
+    justify-content: center;
+    aspect-ratio: 1;
+    padding: @layout-gutter;
+    border: 1px solid @border-color-split;
+    border-radius: @border-radius-base;
+    color: @text-color;
+    text-align: center;
+    background-color: @component-background;
+    transition:
+      border-color 0.2s,
+      box-shadow 0.2s,
+      transform 0.2s;
+
+    &:hover,
+    &:focus-visible {
+      transform: translateY(-2px);
+      border-color: @primary-color;
+      color: @primary-color;
+      box-shadow: @box-shadow-base;
+    }
+
+    &--disabled {
+      pointer-events: none;
+      opacity: 0.45;
+    }
+  }
+
+  &__tile-icon {
+    font-size: 28px;
+    color: @primary-color;
+  }
+
+  &__tile-text {
+    /* Long Persian labels wrap rather than overflow the square. */
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    font-size: 13px;
+    line-height: 1.6;
+  }
+
+  /* --- Footer -------------------------------------------------------------- */
+  &__foot {
+    display: flex;
+    flex-wrap: wrap;
+    gap: @layout-gutter * 2;
+    align-items: center;
+    margin-top: auto;
+    padding-top: @layout-gutter * 2;
+    border-top: 1px solid @border-color-split;
+    font-size: 13px;
+  }
+
+  &__user {
+    color: @text-color-secondary;
+  }
+
+  &__link {
+    cursor: pointer;
+    padding: 0;
+    border: none;
+    font: inherit;
+    color: @text-color-secondary;
+    background: none;
+
+    &:hover {
+      color: @primary-color;
+    }
+  }
+}
+
+@media (max-width: @mobile-max) {
+  .portal {
+    padding: (@layout-gutter * 3) @layout-gutter * 2;
+
+    &__head {
+      margin-bottom: @layout-gutter * 3;
+    }
+  }
+}

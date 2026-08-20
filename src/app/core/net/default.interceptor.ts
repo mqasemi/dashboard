@@ -9,14 +9,13 @@ import { tryRefreshToken } from './refresh-token';
 
 function handleData(injector: Injector, ev: HttpResponseBase, req: HttpRequest<any>, next: HttpHandlerFn): Observable<any> {
   checkStatus(injector, ev);
-  // 业务处理：一些通用操作
+  // Common handling per status code
   switch (ev.status) {
     case 200:
-      // 业务层级错误处理，以下是假定restful有一套统一输出格式（指不管成功与否都有相应的数据格式）情况下进行处理
-      // 例如响应内容：
-      //  错误内容：{ status: 1, msg: '非法参数' }
-      //  正确内容：{ status: 0, response: {  } }
-      // 则以下代码片断可直接适用
+      // Business-level error handling. The snippet below assumes the REST API always returns a
+      // uniform envelope (i.e. the same shape whether the call succeeded or failed), e.g.:
+      //  error:   { status: 1, msg: 'invalid parameter' }
+      //  success: { status: 0, response: { } }
       // if (ev instanceof HttpResponse) {
       //   const body = ev.body;
       //   if (body && body.status !== 0) {
@@ -24,13 +23,13 @@ function handleData(injector: Injector, ev: HttpResponseBase, req: HttpRequest<a
       //     if (customError) injector.get(NzMessageService).error(body.msg);
       //     return customError ? throwError(() => ({ body, _throw: true }) as ReThrowHttpError) : of({});
       //   } else {
-      //     // 返回原始返回体
+      //     // Return the raw response body
       //     if (req.context.get(RAW_BODY) || ev.body instanceof Blob) {
       //       return of(ev);
       //     }
-      //     // 重新修改 `body` 内容为 `response` 内容，对于绝大多数场景已经无须再关心业务状态码
+      //     // Unwrap `body` to `response` so callers no longer deal with the business status code
       //     return of(new HttpResponse({ ...ev, body: body.response } as any));
-      //     // 或者依然保持完整的格式
+      //     // Or keep the full envelope intact
       //     return of(ev);
       //   }
       // }
@@ -48,7 +47,10 @@ function handleData(injector: Injector, ev: HttpResponseBase, req: HttpRequest<a
       break;
     default:
       if (ev instanceof HttpErrorResponse) {
-        console.warn('未可知错误，大部分是由于后端不支持跨域CORS或无效配置引起，请参考 https://ng-alain.com/docs/server 解决跨域问题', ev);
+        console.warn(
+          'Unknown error. This is usually caused by the backend not supporting CORS or by an invalid configuration. See https://ng-alain.com/docs/server',
+          ev
+        );
       }
       break;
   }
@@ -62,7 +64,7 @@ function handleData(injector: Injector, ev: HttpResponseBase, req: HttpRequest<a
 }
 
 export const defaultInterceptor: HttpInterceptorFn = (req, next) => {
-  // 统一加上服务端前缀
+  // Prefix every relative URL with the configured server base URL
   let url = req.url;
   if (!req.context.get(IGNORE_BASE_URL) && !url.startsWith('https://') && !url.startsWith('http://')) {
     const { baseUrl } = environment.api;
@@ -73,11 +75,11 @@ export const defaultInterceptor: HttpInterceptorFn = (req, next) => {
 
   return next(newReq).pipe(
     mergeMap(ev => {
-      // 允许统一对请求错误处理
+      // Centralised handling of request errors
       if (ev instanceof HttpResponseBase) {
         return handleData(injector, ev, newReq, next);
       }
-      // 若一切都正常，则后续操作
+      // Otherwise pass through untouched
       return of(ev);
     })
     // catchError((err: HttpErrorResponse) => handleData(injector, err, newReq, next))

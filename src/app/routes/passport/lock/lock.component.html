@@ -5,15 +5,15 @@
     </div>
     <form nz-form [formGroup]="f" (ngSubmit)="submit()" role="form" class="mt-md">
       <nz-form-item>
-        <nz-form-control [nzErrorTip]="'Please enter your password!'">
+        <nz-form-control [nzErrorTip]="'گذرواژه را وارد کنید.'">
           <nz-input-group nzSuffixIcon="lock">
-            <input type="password" nz-input formControlName="password" />
+            <input type="password" nz-input formControlName="password" class="ltr-text" />
           </nz-input-group>
         </nz-form-control>
       </nz-form-item>
       <div nz-row nzType="flex" nzAlign="middle">
-        <div nz-col [nzOffset]="12" [nzSpan]="12" style="text-align: right">
-          <button nz-button [disabled]="!f.valid" nzType="primary">Lock</button>
+        <div nz-col [nzOffset]="12" [nzSpan]="12" style="text-align: left">
+          <button nz-button [disabled]="!f.valid" nzType="primary">قفل صفحه</button>
         </div>
       </div>
     </form>

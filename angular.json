@@ -65,7 +65,12 @@
                 "glob": "**/*",
                 "input": "public"
               },
-              "src/assets"
+              "src/assets",
+              {
+                "glob": "Vazirmatn-{Regular,Medium,SemiBold,Bold}.woff2",
+                "input": "node_modules/vazirmatn/fonts/webfonts",
+                "output": "assets/fonts"
+              }
             ],
             "styles": [
               "src/styles.less"

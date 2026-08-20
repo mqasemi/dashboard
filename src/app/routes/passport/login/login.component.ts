@@ -7,6 +7,7 @@ import { ReuseTabService } from '@delon/abc/reuse-tab';
 import { ALLOW_ANONYMOUS, DA_SERVICE_TOKEN, SocialOpenType, SocialService } from '@delon/auth';
 import { SettingsService, _HttpClient } from '@delon/theme';
 import { environment } from '@env/environment';
+import { PersianDigitsPipe } from '@shared';
 import { NzAlertModule } from 'ng-zorro-antd/alert';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzCheckboxModule } from 'ng-zorro-antd/checkbox';
@@ -33,7 +34,8 @@ import { finalize } from 'rxjs';
     NzInputModule,
     NzButtonModule,
     NzToolTipModule,
-    NzIconModule
+    NzIconModule,
+    PersianDigitsPipe
   ]
 })
 export class UserLoginComponent implements OnDestroy {
@@ -49,7 +51,7 @@ export class UserLoginComponent implements OnDestroy {
   form = inject(FormBuilder).nonNullable.group({
     userName: ['', [Validators.required, Validators.pattern(/^(admin|user)$/)]],
     password: ['', [Validators.required, Validators.pattern(/^(ng-alain\.com)$/)]],
-    mobile: ['', [Validators.required, Validators.pattern(/^1\d{10}$/)]],
+    mobile: ['', [Validators.required, Validators.pattern(/^09\d{9}$/)]],
     captcha: ['', [Validators.required]],
     remember: [true]
   });
@@ -58,7 +60,7 @@ export class UserLoginComponent implements OnDestroy {
   loading = false;
 
   count = 0;
-  interval$: any;
+  interval$?: ReturnType<typeof setInterval>;
 
   switch({ index }: NzTabChangeEvent): void {
     this.type = index!;
@@ -102,8 +104,8 @@ export class UserLoginComponent implements OnDestroy {
       }
     }
 
-    // 默认配置中对所有HTTP请求都会强制 [校验](https://ng-alain.com/auth/getting-started) 用户 Token
-    // 然一般来说登录请求不需要校验，因此加上 `ALLOW_ANONYMOUS` 表示不触发用户 Token 校验
+    // By default every HTTP request has its user token validated (https://ng-alain.com/auth/getting-started).
+    // The login request itself must not be validated, hence `ALLOW_ANONYMOUS`.
     this.loading = true;
     this.cdr.detectChanges();
     this.http
@@ -131,13 +133,13 @@ export class UserLoginComponent implements OnDestroy {
           this.cdr.detectChanges();
           return;
         }
-        // 清空路由复用信息
+        // Reset the route-reuse cache
         this.reuseTabService?.clear();
-        // 设置用户Token信息
+        // Persist the user token
         // TODO: Mock expired value
         res.user.expired = +new Date() + 1000 * 60 * 5;
         this.tokenService.set(res.user);
-        // 重新获取 StartupService 内容，我们始终认为应用信息一般都会受当前用户授权范围而影响
+        // Reload StartupService: app data is always assumed to depend on the current user's scope
         this.startupSrv.load().subscribe(() => {
           let url = this.tokenService.referrer!.url || '/';
           if (url.includes('/passport')) {
@@ -164,9 +166,6 @@ export class UserLoginComponent implements OnDestroy {
         url = `//github.com/login/oauth/authorize?client_id=9d6baae4b04a23fcafa2&response_type=code&redirect_uri=${decodeURIComponent(
           callback
         )}`;
-        break;
-      case 'weibo':
-        url = `https://api.weibo.com/oauth2/authorize?client_id=1239507802&response_type=code&redirect_uri=${decodeURIComponent(callback)}`;
         break;
     }
     if (openType === 'window') {

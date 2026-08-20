@@ -22,11 +22,11 @@ import { BehaviorSubject, debounceTime, distinctUntilChanged, tap } from 'rxjs';
   template: `
     <nz-input-group [nzPrefix]="iconTpl" [nzSuffix]="loadingTpl">
       <ng-template #iconTpl>
-        <i nz-icon [nzType]="focus ? 'arrow-down' : 'search'"></i>
+        <nz-icon [nzType]="focus ? 'arrow-down' : 'search'" />
       </ng-template>
       <ng-template #loadingTpl>
         @if (loading) {
-          <i nz-icon nzType="loading"></i>
+          <nz-icon nzType="loading" />
         }
       </ng-template>
       <input
@@ -38,7 +38,7 @@ import { BehaviorSubject, debounceTime, distinctUntilChanged, tap } from 'rxjs';
         (focus)="qFocus()"
         (blur)="qBlur()"
         hotkey="F1"
-        [attr.placeholder]="'Search for people, file, photos... (Press F1 to focus)'"
+        [attr.placeholder]="'جست‌وجو… (کلید F1)'"
       />
     </nz-input-group>
     <nz-autocomplete nzBackfill #auto>

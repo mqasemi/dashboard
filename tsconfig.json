@@ -28,6 +28,24 @@
       ],
       "@_mock": [
         "_mock/index"
+      ],
+      /*
+       * `package.json` installs `date-fns-jalali` under the alias `date-fns`, so that ng-zorro's own
+       * `date-fns` imports resolve to it and the date-picker becomes Jalali (see
+       * `scripts/dedupe-date-fns.mjs`). But the package's ~3000 type declarations are ambient and
+       * keyed to its real name — `declare module 'date-fns-jalali'` — so importing the alias name
+       * yields `TS2306: ... is not a module`.
+       *
+       * Mapping the real name onto the aliased folder lets our own code import `date-fns-jalali`
+       * and get correct types, while still sharing the single physical copy with ng-zorro. Adding
+       * `date-fns-jalali` as a second dependency would type-check too, but would put a duplicate
+       * copy of the library in the bundle.
+       */
+      "date-fns-jalali": [
+        "node_modules/date-fns"
+      ],
+      "date-fns-jalali/locale": [
+        "node_modules/date-fns/locale"
       ]
     }
   },

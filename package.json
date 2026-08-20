@@ -16,6 +16,7 @@
     "theme": "ng-alain-plugin-theme -t=themeCss",
     "icon": "ng g ng-alain:plugin icon",
     "prepare": "husky",
+    "postinstall": "node scripts/dedupe-date-fns.mjs",
     "lint": "npm run lint:ts && npm run lint:style",
     "lint:ts": "npx eslint --cache --fix",
     "lint:style": "stylelint \"src/**/*.less\" --fix"
@@ -39,11 +40,13 @@
     "@delon/mock": "^20.1.1",
     "@delon/theme": "^20.1.1",
     "@delon/util": "^20.1.1",
+    "date-fns": "npm:date-fns-jalali@^2.30.0-0",
     "ng-alain": "^20.1.1",
     "ng-zorro-antd": "^20.3.1",
     "rxjs": "~7.8.0",
     "screenfull": "^6.0.2",
     "tslib": "^2.3.0",
+    "vazirmatn": "^33.0.3",
     "zone.js": "~0.15.0"
   },
   "devDependencies": {

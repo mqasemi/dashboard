@@ -1,0 +1,53 @@
+<div class="portal">
+  <header class="portal__head">
+    <img class="portal__logo" src="./assets/logo-full.svg" [alt]="appName()" />
+    <h1 class="portal__title">{{ appName() }}</h1>
+  </header>
+
+  @for (group of groups(); track $index) {
+    <section class="portal__group">
+      @if (group.text) {
+        <h2 class="portal__group-title">{{ group.text }}</h2>
+      }
+      <div nz-row [nzGutter]="[16, 16]">
+        @for (item of group.items; track $index) {
+          <div nz-col [nzXs]="12" [nzSm]="8" [nzMd]="6" [nzLg]="4">
+            <!-- Two anchors rather than one with a shared <ng-template>: `let-item` on an outlet is
+                 untyped, and duplicating the face keeps `item` narrowed to `NavNode`. -->
+            @if (item.externalLink) {
+              <a
+                class="portal__tile"
+                [class.portal__tile--disabled]="item.disabled"
+                [href]="item.externalLink"
+                [attr.target]="item.target"
+                rel="noopener"
+              >
+                <nz-icon class="portal__tile-icon" [nzType]="item.icon?.type ?? fallbackIcon" [nzTheme]="item.icon?.theme ?? 'outline'" />
+                <span class="portal__tile-text">{{ item.text }}</span>
+              </a>
+            } @else {
+              <a class="portal__tile" [class.portal__tile--disabled]="item.disabled" [routerLink]="item.link">
+                <nz-icon class="portal__tile-icon" [nzType]="item.icon?.type ?? fallbackIcon" [nzTheme]="item.icon?.theme ?? 'outline'" />
+                <span class="portal__tile-text">{{ item.text }}</span>
+              </a>
+            }
+          </div>
+        }
+      </div>
+    </section>
+  } @empty {
+    <p class="portal__empty">هیچ بخشی برای نمایش وجود ندارد.</p>
+  }
+
+  <footer class="portal__foot">
+    <span class="portal__user">{{ userName() }}</span>
+    <button type="button" class="portal__link" (click)="useSidebarLayout()">
+      <nz-icon nzType="layout" />
+      نمایش با منوی کناری
+    </button>
+    <button type="button" class="portal__link" (click)="logout()">
+      <nz-icon nzType="logout" />
+      خروج از حساب
+    </button>
+  </footer>
+</div>

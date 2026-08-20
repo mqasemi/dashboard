@@ -1,5 +1,6 @@
-### CoreModule
+# core
 
-**应** 仅只留 `providers` 属性。
+Singleton, app-wide concerns only: HTTP interceptors, startup initialisers, guards, and services
+that must have exactly one instance (auth, i18n, app configuration).
 
-**作用：**  一些通用服务，例如：用户消息、HTTP数据访问。
+Anything reusable but not singleton — components, pipes, directives — belongs in `shared` instead.

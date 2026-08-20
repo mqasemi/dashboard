@@ -3,7 +3,7 @@ import { APP_INITIALIZER, Injectable, Provider, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { ACLService } from '@delon/acl';
 import { DA_SERVICE_TOKEN } from '@delon/auth';
-import { MenuService, SettingsService, TitleService } from '@delon/theme';
+import { MenuService, SettingsService, TitleService, type App, type User } from '@delon/theme';
 import type { NzSafeAny } from 'ng-zorro-antd/core/types';
 import { Observable, of, catchError, map } from 'rxjs';
 
@@ -66,14 +66,15 @@ export class StartupService {
     //   return;
     // }
     // mock
-    const app: any = {
-      name: `NG-ALAIN`,
-      description: `NG-ZORRO admin panel front-end framework`
+    const appName = 'داشبورد مدیریت';
+    const app: App = {
+      name: appName,
+      description: 'پنل مدیریت عمومی بر پایهٔ Angular و ng-alain'
     };
-    const user: any = {
-      name: 'Admin',
+    const user: User = {
+      name: 'مدیر سیستم',
       avatar: './assets/tmp/img/avatar.jpg',
-      email: 'cipchk@qq.com',
+      email: 'admin@example.com',
       token: '123456789'
     };
     // Application information: including site name, description, year
@@ -83,21 +84,45 @@ export class StartupService {
     // ACL: Set the permissions to full, https://ng-alain.com/acl/getting-started
     this.aclService.setFull(true);
     // Menu data, https://ng-alain.com/theme/menu
+    // Only routes that actually exist are listed; the nested "صفحات خطا" branch is here so the
+    // sidebar's collapsible submenus, the top-navigation dropdowns and the portal's group headings
+    // all have something real to render. Step 6 replaces this with the user-management module.
     this.menuService.add([
       {
-        text: 'Main',
+        text: 'منوی اصلی',
         group: true,
         children: [
           {
-            text: 'Dashboard',
+            text: 'داشبورد',
             link: '/dashboard',
-            icon: { type: 'icon', value: 'appstore' }
+            icon: { type: 'icon', value: 'dashboard' }
+          }
+        ]
+      },
+      {
+        text: 'ابزارها',
+        group: true,
+        children: [
+          {
+            text: 'صفحات خطا',
+            icon: { type: 'icon', value: 'warning' },
+            children: [
+              { text: 'دسترسی غیرمجاز', link: '/exception/403', icon: { type: 'icon', value: 'stop' } },
+              { text: 'صفحه یافت نشد', link: '/exception/404', icon: { type: 'icon', value: 'file-search' } },
+              { text: 'خطای سرور', link: '/exception/500', icon: { type: 'icon', value: 'cloud-server' } },
+              { text: 'آزمون خطا', link: '/exception/trigger', icon: { type: 'icon', value: 'bug' } }
+            ]
+          },
+          {
+            text: 'قفل صفحه',
+            link: '/passport/lock',
+            icon: { type: 'icon', value: 'lock' }
           }
         ]
       }
     ]);
     // Can be set page suffix title, https://ng-alain.com/theme/title
-    this.titleService.suffix = app.name;
+    this.titleService.suffix = appName;
 
     return of(void 0);
   }
@@ -106,7 +131,6 @@ export class StartupService {
     // http
     // return this.viaHttp();
     // mock: Don’t use it in a production environment. ViaMock is just to simulate some data to make the scaffolding work normally
-    // mock：请勿在生产环境中这么使用，viaMock 单纯只是为了模拟一些数据使脚手架一开始能正常运行
     return this.viaMock();
   }
 }

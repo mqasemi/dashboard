@@ -1,1 +1,27 @@
-<page-header />
+<page-header [title]="'داشبورد'" />
+
+<nz-card nzTitle="بررسی تنظیمات فارسی‌سازی" class="mt-md">
+  <div nz-row [nzGutter]="[16, 16]">
+    <div nz-col [nzXs]="24" [nzMd]="8">
+      <p class="text-grey">تاریخ امروز (شمسی)</p>
+      <strong>{{ today | jalaliDate: longFormat }}</strong>
+    </div>
+    <div nz-col [nzXs]="24" [nzMd]="8">
+      <p class="text-grey">عدد نمونه</p>
+      <strong>{{ 1405 | persianDigits }}</strong>
+    </div>
+    <div nz-col [nzXs]="24" [nzMd]="8">
+      <p class="text-grey">انتخاب تاریخ شمسی</p>
+      <nz-date-picker
+        [ngModel]="picked()"
+        (ngModelChange)="picked.set($event)"
+        nzFormat="yyyy/MM/dd"
+        class="width-100"
+      />
+      <p class="mt-sm mb0 text-grey">
+        مقدار ISO ارسالی به سرور:
+        <span class="ltr-text">{{ pickedISO() ?? '—' }}</span>
+      </p>
+    </div>
+  </div>
+</nz-card>

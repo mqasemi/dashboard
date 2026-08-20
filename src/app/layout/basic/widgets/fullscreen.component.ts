@@ -5,8 +5,8 @@ import screenfull from 'screenfull';
 @Component({
   selector: 'header-fullscreen',
   template: `
-    <i nz-icon [nzType]="status ? 'fullscreen-exit' : 'fullscreen'"></i>
-    {{ status ? 'Exit Fullscreen' : 'Fullscreen' }}
+    <nz-icon [nzType]="status ? 'fullscreen-exit' : 'fullscreen'" />
+    {{ status ? 'خروج از تمام‌صفحه' : 'نمایش تمام‌صفحه' }}
   `,
   host: {
     '[class.flex-1]': 'true'

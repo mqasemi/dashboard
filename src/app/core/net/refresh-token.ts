@@ -9,9 +9,10 @@ let refreshToking = false;
 let refreshToken$: BehaviorSubject<any> = new BehaviorSubject<any>(null);
 
 /**
- * 重新附加新 Token 信息
+ * Re-attach the refreshed token.
  *
- * > 由于已经发起的请求，不会再走一遍 `@delon/auth` 因此需要结合业务情况重新附加新的 Token
+ * > Requests that were already in flight do not pass through `@delon/auth` again, so the new
+ * > token has to be attached manually here to match your backend's expectations.
  */
 function reAttachToken(injector: Injector, req: HttpRequest<any>): HttpRequest<any> {
   const token = injector.get(DA_SERVICE_TOKEN).get()?.token;
@@ -28,15 +29,16 @@ function refreshTokenRequest(injector: Injector): Observable<any> {
 }
 
 /**
- * 刷新Token方式一：使用 401 重新刷新 Token
+ * Refresh strategy 1: refresh the token in response to a 401.
  */
 export function tryRefreshToken(injector: Injector, ev: HttpResponseBase, req: HttpRequest<any>, next: HttpHandlerFn): Observable<any> {
-  // 1、若请求为刷新Token请求，表示来自刷新Token可以直接跳转登录页
+  // 1. If the failing request *is* the refresh call, the refresh token is dead too — go to login
   if ([`/api/auth/refresh`].some(url => req.url.includes(url))) {
     toLogin(injector);
     return throwError(() => ev);
   }
-  // 2、如果 `refreshToking` 为 `true` 表示已经在请求刷新 Token 中，后续所有请求转入等待状态，直至结果返回后再重新发起请求
+  // 2. If `refreshToking` is true a refresh is already in flight; queue this request until the
+  //    result arrives, then replay it. This is what prevents concurrent refresh calls.
   if (refreshToking) {
     return refreshToken$.pipe(
       filter(v => !!v),
@@ -44,18 +46,18 @@ export function tryRefreshToken(injector: Injector, ev: HttpResponseBase, req: H
       switchMap(() => next(reAttachToken(injector, req)))
     );
   }
-  // 3、尝试调用刷新 Token
+  // 3. Start a refresh
   refreshToking = true;
   refreshToken$.next(null);
 
   return refreshTokenRequest(injector).pipe(
     switchMap(res => {
-      // 通知后续请求继续执行
+      // Release the queued requests
       refreshToking = false;
       refreshToken$.next(res);
-      // 重新保存新 token
+      // Persist the new token
       injector.get(DA_SERVICE_TOKEN).set(res);
-      // 重新发起请求
+      // Replay the original request
       return next(reAttachToken(injector, req));
     }),
     catchError(err => {
@@ -89,7 +91,8 @@ function buildAuthRefresh(injector: Injector): void {
 }
 
 /**
- * 刷新Token方式二：使用 `@delon/auth` 的 `refresh` 接口，需要在 `app.config.ts` 中注册 `provideBindAuthRefresh`
+ * Refresh strategy 2: use `@delon/auth`'s `refresh` hook. Requires registering
+ * `provideBindAuthRefresh` in `app.config.ts`.
  */
 export function provideBindAuthRefresh(): EnvironmentProviders[] {
   return [

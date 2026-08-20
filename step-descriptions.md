@@ -190,3 +190,113 @@ Step 1 is complete and verified. Dev server served HTTP 200 with <app-root> and 
   than risk breaking alias resolution at the end of Step 1.                                                                                                                     l registry. Next action is your
 
   Awaiting your confirmation before Step 2.
+
+  Fixed. All three gates green: 0 lint errors (15 pre-existing scaffold warnings), 47/47 tests, clean build.
+
+  1. Where the year is rendered — your hypothesis was close, but the mechanism was different
+  The header year is routed through the aliased date-fns. DateHeaderComponent does:
+  label: this.dateHelper.format(this.value.nativeDate, transCompatFormat(this.locale.yearFormat))
+
+  No stray getFullYear() there. The real cause was two copies of date-fns. ng-zorro-antd declares "date-fns": "^2.16.1", and every
+  date-fns-jalali 2.x release is a prerelease (2.30.0-0) — semver never matches a prerelease unless the range names one, so npm
+  installed a second, genuine Gregorian date-fns at node_modules/ng-zorro-antd/node_modules/date-fns. ng-zorro formatted Gregorian
+  dates while being handed our Jalali locale object, which is also why "نابآ" appeared: it's the 8th Jalali month matched to Gregorian
+  month index 7 by array-index collision, not a translation of August.
+
+  overrides can't express this — npm 10.9.3 strips the npm: alias and re-resolves against the real package (npm ls says "overridden"
+  while still installing 2.30.0). I verified all three formulations fail, so the dedupe is a postinstall script instead.
+
+  Removing the duplicate exposed a second, independent defect: TypeScript had been sourcing date-fns types from the nested Gregorian
+  copy all along. The app's types described a different calendar from the one it ran on, and the build was only ever green because of
+  the duplicate causing your bug.
+
+  2. A third bug the diagnosis turned up — silent value corruption
+
+  CandyDate is half converted. Its mutators go through date-fns (so the alias made them Jalali), but its accessors are hand-written
+  native calls. DateTableComponent.changeValueFromInside() round-trips every click through
+  setYear(getYear()).setMonth(getMonth()).setDate(getDate()) — meant to be the identity. With Gregorian reads and Jalali writes it
+  wasn't. I measured it: clicking 28 Mordad 1405 returned 2647-11-19.
+
+  The fix routes those four accessors through date-fns-jalali so both halves agree on one calendar. Every panel reads year/month/day
+  through these methods rather than touching nativeDate, so one patch covers the grid, both header buttons, the decade/year range
+  labels and the click round-trip. getDay() and the time accessors stay native — a weekday and a wall clock are the same in both
+  calendars.
+
+  3. Exact rendered strings
+
+                   BEFORE                    AFTER
+  yearBtn          "2026"      Gregorian     "1405"
+  monthBtn         "ابآ"       wrong month   "دادرم"
+  selectedCell     "19"        Gregorian     "28"
+  firstRow         1,2,3,…,7   Aug 2026      27,28,29,30,31,1,2   (27–31 Tir, then 1–2 Mordad)
+  input            "2026-08-19"              "1405-05-28"
+  weekdays         ج ,ش5 ,ش4 ,ش3 ,ش2 ,ش1 ,ش  (unchanged — already correct)
+
+  I also gave fa_IR a monthFormat: 'MMMM' (upstream omits it, so the header fell back to the abbreviation درم) and changed its
+  dateFormat from US M/D/YYYY to yyyy/MM/dd.
+
+  I initially wrote the firstRow expectation as 26…1 and the test caught me — 1 Mordad 1405 is a Thursday, not a Friday, so the grid
+  opens on Saturday 27 Tir. The picker was right; I corrected the test.
+
+  Bundle got smaller, not bigger: 2.56 MB raw / 475.74 kB transfer, down from 2.62 MB / 478.80 kB, since the duplicate library is gone.  A paths mapping gives our code correct types off the single physical copy — adding date-fns-jalali as a second dependency would also
+  type-check but would duplicate the library in the bundle.
+
+  Two things I deliberately left, both documented in code:
+  - The text input renders 1405-05-28. ng-zorro hardcodes 'yyyy-MM-dd' and nzFormat isn't WithConfig-decorated, so it can't be
+  defaulted app-wide without a wrapper directive. It's correct Jalali; per-picker nzFormat="yyyy/MM/dd" is available.
+  - CandyDate.isSame(date, 'decade') still compares getFullYear() directly. It only asks whether two years are within 11 of each other
+  and the calendars differ by a near-constant 621, so it agrees except at a year boundary, where it could mis-highlight one cell in the  decade panel.
+
+  Step 2 is complete and awaiting your confirmation before Step 3.
+
+✻ Cooked for 1h 15m 34s
+
+※ recap: Goal is the Angular 20 ng-alain admin panel; Step 2 (RTL & Persian theme) is now done, including the Jalali date-picker bug 
+  fix, with lint, 47 tests, and build all green. Waiting on your confirmation to start Step 3, the layouts. (disable recaps in /config)
+
+
+
+Step 3 (Layouts) is complete. ng build ✅ · ng test 79/79 ✅ · lint 0 errors ✅
+
+  What was built
+  core/layout/ (new)
+  - layout-mode.service.ts — LayoutMode = 'sidebar' | 'top' | 'portal', signal-backed, persisted to  localStorage['dashboard.layout-mode'] via an effect, read in the field initialiser so it's applied at bootstrap (no flash of the
+  wrong shell). Exposes mode(), isTopMenu(), startPage().
+  - menu-tree.ts — pure transforms over MenuService output: toNavGroups (headings + entries, for the portal), toNavItems (flattened,
+  for the top bar), isNodeActive (segment-boundary matching, so /users-archive doesn't light up /users). Non-anticon icons are dropped
+  rather than passed to nzType.
+  - nav-menu.service.ts — signal view over MenuService.change + the current URL, for the two shells layout-default-nav doesn't cover.
+
+  Layouts
+  - basic.component.ts — one shell for sidebar and top, driven by options(). The right-hand sidebar needs no positioning code:
+  .alain-default__aside is absolutely positioned with neither left nor right, so RTL puts it on the right. Top mode sets hideAside and
+  swaps in header-top-menu; under 768px the entries move into an nz-drawer that reuses layout-default-nav. Deliberately left on Default  change detection — layout-default mutates its own state without markForCheck(), so an OnPush ancestor would freeze it.
+  - widgets/top-menu.component.ts — horizontal menu with nz-dropdown submenus.
+  - widgets/layout-mode.component.ts — mode switcher in the settings dropdown.
+  - routes/portal/ — tile grid under LayoutBlankComponent, fed from MenuService (so Step 6's feature appears with no change here),
+  aspect-ratio: 1 squares, @empty state, footer with sign-out + "return to sidebar" so portal mode isn't a dead end.
+  - routes/routes.ts — / uses a function redirectTo (() => inject(LayoutModeService).startPage()), evaluated per navigation, so
+  switching modes changes where / lands without a reload.
+
+  Two genuine @delon RTL bugs found and patched in src/styles/index.less
+
+  1. .alain-default__hide-aside .alain-default__content only resets margin-left, but the RTL mixin sets margin-right: 224px — top-nav
+  mode left a phantom 224px gutter on the right.
+  2. .alain-default__nav:first-child { margin-right: 16px } is physical; flipped to margin-left in RTL.
+
+  Also
+
+  - style-icons.ts / style-icons-auto.ts: registered menu-fold/menu-unfold (delon's collapse trigger — a pre-existing gap that broke
+  the sidebar toggle icon), plus layout, menu, appstore and the new menu icons.
+  - startup.service.ts + app-data.json: the mock menu now lists only routes that exist, with a nested branch so
+  submenus/dropdowns/group headings have something real to render.
+  - stylelint.config.mjs: widened selector-class-pattern to BEM — the codebase and the ng-zorro/@delon classes we override are all
+  block__element--modifier, which the standard kebab-case default rejects.
+
+  Tests added: menu-tree.spec.ts (16 specs, fed through a real MenuService rather than literals), basic.component.spec.ts (6),
+  portal.component.spec.ts (6).
+
+  Two notes on the 16 remaining lint warnings: all are pre-existing scaffold anys in core/net/* and deprecation notices
+  (APP_INITIALIZER, NzToolTipModule, provideNoopAnimations) — none in Step 3 code except the last, which is the only non-deprecated way  to disable animations in a TestBed today.
+
+  Awaiting your confirmation before Step 4 (Core & Auth).

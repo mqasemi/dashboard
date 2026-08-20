@@ -6,8 +6,8 @@ import { NzModalService } from 'ng-zorro-antd/modal';
 @Component({
   selector: 'header-clear-storage',
   template: `
-    <i nz-icon nzType="tool"></i>
-    Clear Local Storage
+    <nz-icon nzType="tool" />
+    پاک‌سازی حافظهٔ محلی
   `,
   host: {
     '[class.flex-1]': 'true'
@@ -22,10 +22,12 @@ export class HeaderClearStorageComponent {
   @HostListener('click')
   _click(): void {
     this.modalSrv.confirm({
-      nzTitle: 'Make sure clear all local storage?',
+      nzTitle: 'از پاک کردن تمام داده‌های ذخیره‌شده در مرورگر مطمئن هستید؟',
+      nzOkText: 'پاک کن',
+      nzCancelText: 'انصراف',
       nzOnOk: () => {
         localStorage.clear();
-        this.messageSrv.success('Clear Finished!');
+        this.messageSrv.success('حافظهٔ محلی پاک شد.');
       }
     });
   }

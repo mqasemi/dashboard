@@ -1,7 +1,10 @@
 // Components
 
 // Utils
-export * from './utils/yuan';
+export * from './utils/currency';
+
+// Pipes
+export * from './pipes/index';
 
 // Module
 export * from './shared-imports';

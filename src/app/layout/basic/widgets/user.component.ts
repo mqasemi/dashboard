@@ -16,22 +16,18 @@ import { NzMenuModule } from 'ng-zorro-antd/menu';
     </div>
     <nz-dropdown-menu #userMenu="nzDropdownMenu">
       <div nz-menu class="width-sm">
-        <div nz-menu-item routerLink="/pro/account/center">
-          <i nz-icon nzType="user" class="mr-sm"></i>
-          Account Center
-        </div>
-        <div nz-menu-item routerLink="/pro/account/settings">
-          <i nz-icon nzType="setting" class="mr-sm"></i>
-          Account Settings
+        <div nz-menu-item routerLink="/dashboard">
+          <nz-icon nzType="dashboard" class="mr-sm" />
+          داشبورد
         </div>
         <div nz-menu-item routerLink="/exception/trigger">
-          <i nz-icon nzType="close-circle" class="mr-sm"></i>
-          Trigger Error
+          <nz-icon nzType="close-circle" class="mr-sm" />
+          آزمون خطا
         </div>
         <li nz-menu-divider></li>
         <div nz-menu-item (click)="logout()">
-          <i nz-icon nzType="logout" class="mr-sm"></i>
-          Logout
+          <nz-icon nzType="logout" class="mr-sm" />
+          خروج از حساب
         </div>
       </div>
     </nz-dropdown-menu>

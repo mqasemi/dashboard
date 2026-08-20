@@ -1,1 +1,130 @@
-/* You can add global styles to this file, and also import other style files */
+/* Global styles and RTL/Persian corrections.
+ *
+ * Theme *variables* live in `./theme.less` (imported last, so Less's lazy variable
+ * resolution lets them override ng-zorro and @delon defaults). This file is for rules.
+ *
+ * Note: @delon/theme already emits `[dir='rtl']` overrides for its spacing/text/float
+ * utilities and for layout-default — that machinery is gated behind `@rtl-enabled`, which
+ * defaults to `true`. Only the gaps it does not cover are patched here.
+ */
+
+/* --- Persian webfont --------------------------------------------------------
+ * Vazirmatn, self-hosted so the app stays offline-capable under the service worker.
+ * The files are copied out of `node_modules/vazirmatn` by the `assets` entry in
+ * angular.json — nothing binary is vendored into the repo.
+ *
+ * Static weights rather than the variable font on purpose: the browser fetches only the
+ * ~45 KB face it actually needs instead of the ~110 KB file carrying all of 100–900.
+ */
+@font-face {
+  font-family: Vazirmatn;
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  src: url('/assets/fonts/Vazirmatn-Regular.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: Vazirmatn;
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+  src: url('/assets/fonts/Vazirmatn-Medium.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: Vazirmatn;
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+  src: url('/assets/fonts/Vazirmatn-SemiBold.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: Vazirmatn;
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+  src: url('/assets/fonts/Vazirmatn-Bold.woff2') format('woff2');
+}
+
+/* --- Base ------------------------------------------------------------------- */
+html,
+body {
+  /* `@font-family` is set in theme.less; restated here so the <html> element (outside
+     ng-zorro's reset scope) also picks up the Persian face. */
+  font-family: @font-family;
+}
+
+/* --- Bidirectional text -----------------------------------------------------
+ * Latin-only strings (emails, URLs, tokens, code) render with reversed punctuation when
+ * they inherit RTL. These utilities isolate them without flipping their container.
+ */
+.ltr-text {
+  direction: ltr;
+  unicode-bidi: isolate;
+  text-align: start;
+}
+
+.rtl-text {
+  direction: rtl;
+  unicode-bidi: isolate;
+  text-align: start;
+}
+
+/* Kept as a single root-level `[dir='rtl']` block on purpose: stylelint's
+ * `no-duplicate-selectors` rejects the same selector opened twice at the same nesting level.
+ */
+[dir='rtl'] {
+  /* Emails and URLs are Latin by nature — isolate them everywhere. */
+  a[href^='mailto:'],
+  a[href^='http'],
+  code,
+  kbd,
+  samp {
+    direction: ltr;
+    unicode-bidi: isolate;
+  }
+
+  /* `.float-left` / `.float-right` are physical by definition and @delon does not flip them,
+     unlike its margin/padding/text utilities. */
+  .float-left {
+    float: right !important;
+  }
+
+  .float-right {
+    float: left !important;
+  }
+
+  /* --- layout-default gaps in @delon's own RTL mixins ------------------------
+   * Two rules in `layout-default/style` are physical and are not covered by the
+   * `layout-default-rtl-mixin` / `layout-default-header-rtl-mixin` blocks.
+   */
+
+  /* `_layout.less` gives the content `margin-right: @alain-default-aside-wd + padding` in RTL,
+     but its `__hide-aside` override only resets `margin-left`. Without this, the top-navigation
+     layout mode leaves a 224px empty gutter on the right where the sidebar would have been.
+     `!important` is required to beat @delon's own `!important` on the same property group. */
+  .alain-default__hide-aside .alain-default__content {
+    margin-right: @alain-default-content-padding !important;
+  }
+
+  /* `_header.less` puts `margin-right: 16px` on the first nav group to separate it from the
+     middle slot; in RTL that separation belongs on the other side. */
+  .alain-default__nav:first-child {
+    margin-right: 0;
+    margin-left: @layout-gutter * 2;
+  }
+}
+
+/* --- Typography -------------------------------------------------------------
+ * Persian has no letter case and no italics; faux-italic slanting of Arabic script is a
+ * legibility problem, so it is neutralised rather than inherited from Ant Design.
+ */
+[lang='fa'],
+[dir='rtl'] {
+  em,
+  i:not([nz-icon], [class*='anticon']) {
+    font-style: normal;
+  }
+}

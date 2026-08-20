@@ -1,15 +1,19 @@
-<nz-result nzStatus="success" [nzTitle]="title" [nzSubTitle]="'The activation email has been sent to your email address and is valid for 24 hours. Please log in to the email in time and click on the link in the email to activate the account.'">
+<nz-result
+  nzStatus="success"
+  [nzTitle]="title"
+  [nzSubTitle]="
+    'رایانامهٔ فعال‌سازی به نشانی شما ارسال شد و تا ۲۴ ساعت اعتبار دارد. لطفاً صندوق رایانامهٔ خود را بررسی کرده و روی پیوند فعال‌سازی کلیک کنید.'
+  "
+>
   <ng-template #title>
     <div class="title" style="font-size: 20px">
-      Account：registered at {{email}}
+      حساب کاربری با نشانی
+      <span class="ltr-text">{{ email }}</span>
+      ثبت شد
     </div>
   </ng-template>
   <div nz-result-extra>
-    <button (click)="msg.success('email')" nz-button nzSize="large" [nzType]="'primary'">
-      View mailbox
-    </button>
-    <button routerLink="/" nz-button nzSize="large">
-      Back to home
-    </button>
+    <button (click)="msg.success('صندوق رایانامه')" nz-button nzSize="large" [nzType]="'primary'">مشاهدهٔ صندوق رایانامه</button>
+    <button routerLink="/" nz-button nzSize="large">بازگشت به خانه</button>
   </div>
 </nz-result>

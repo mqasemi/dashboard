@@ -1,7 +1,12 @@
 {
-  "name": "dashboard",
-  "short_name": "dashboard",
+  "name": "داشبورد مدیریت",
+  "short_name": "داشبورد",
+  "description": "پنل مدیریت عمومی بر پایهٔ Angular و ng-alain",
+  "lang": "fa-IR",
+  "dir": "rtl",
   "display": "standalone",
+  "theme_color": "#1890ff",
+  "background_color": "#1890ff",
   "scope": "./",
   "start_url": "./",
   "icons": [

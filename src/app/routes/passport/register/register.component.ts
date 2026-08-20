@@ -5,6 +5,7 @@ import { Router, RouterLink } from '@angular/router';
 import { ALLOW_ANONYMOUS } from '@delon/auth';
 import { _HttpClient } from '@delon/theme';
 import { MatchControl } from '@delon/util/form';
+import { PersianDigitsPipe } from '@shared';
 import { NzAlertModule } from 'ng-zorro-antd/alert';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzSafeAny } from 'ng-zorro-antd/core/types';
@@ -31,7 +32,8 @@ import { finalize } from 'rxjs';
     NzProgressModule,
     NzSelectModule,
     NzGridModule,
-    NzButtonModule
+    NzButtonModule,
+    PersianDigitsPipe
   ]
 })
 export class UserRegisterComponent implements OnDestroy {
@@ -46,8 +48,8 @@ export class UserRegisterComponent implements OnDestroy {
       mail: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(6), UserRegisterComponent.checkPassword.bind(this)]],
       confirm: ['', [Validators.required, Validators.minLength(6)]],
-      mobilePrefix: ['+86'],
-      mobile: ['', [Validators.required, Validators.pattern(/^1\d{10}$/)]],
+      mobilePrefix: ['+98'],
+      mobile: ['', [Validators.required, Validators.pattern(/^09\d{9}$/)]],
       captcha: ['', [Validators.required]]
     },
     {
@@ -71,7 +73,7 @@ export class UserRegisterComponent implements OnDestroy {
   // #region get captcha
 
   count = 0;
-  interval$: NzSafeAny;
+  interval$?: ReturnType<typeof setInterval>;
 
   static checkPassword(control: FormControl): NzSafeAny {
     if (!control) {
