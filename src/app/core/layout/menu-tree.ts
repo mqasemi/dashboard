@@ -85,9 +85,34 @@ export function toNavGroups(menus: readonly Menu[]): NavGroup[] {
   return groups;
 }
 
-/** Flattens the group level away — the shape a horizontal header menu renders. */
+/**
+ * The shape a horizontal header menu renders: the full tree, nesting intact at every depth.
+ *
+ * Parents stay parents and keep their descendants, so a branch three levels deep arrives as a
+ * dropdown inside a dropdown rather than as loose entries. The only level that is reshaped is
+ * the top one, because that is the one place the two shells genuinely differ: in the sidebar a
+ * `group: true` node is a caption — `layout-default-nav` prints its text, then renders its
+ * children as ordinary entries beneath it. A horizontal bar has nowhere to put a caption, so
+ * the heading becomes the label of the dropdown that holds those children instead.
+ *
+ * A group holding a single child is the exception: wrapping one link in its own dropdown is a
+ * detour, not a grouping, so the child is promoted onto the bar and the heading dropped.
+ */
 export function toNavItems(menus: readonly Menu[]): NavNode[] {
-  return toNavGroups(menus).flatMap(group => group.items);
+  const items: NavNode[] = [];
+  for (const menu of menus.filter(isVisible)) {
+    const node = toNode(menu);
+    if ((menu as MenuInner).group !== true) {
+      // Already a real entry rather than a heading — nothing to unwrap.
+      items.push(node);
+    } else if (node.children.length === 1) {
+      items.push(node.children[0]);
+    } else if (node.children.length > 1) {
+      items.push(node);
+    }
+    // A heading whose children are all hidden has nothing left to open, so it contributes nothing.
+  }
+  return items;
 }
 
 /**

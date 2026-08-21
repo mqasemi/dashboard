@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { provideRouter } from '@angular/router';
 import { DA_SERVICE_TOKEN } from '@delon/auth';
-import { ALAIN_SETTING_DEFAULT, MenuService } from '@delon/theme';
+import { ALAIN_SETTING_DEFAULT, Menu, MenuService } from '@delon/theme';
 import { provideNzIcons } from 'ng-zorro-antd/icon';
 import { NzModalModule } from 'ng-zorro-antd/modal';
 
@@ -15,6 +15,29 @@ import { LayoutModeService } from '../../core';
 const STORAGE_KEY = 'dashboard.layout-mode';
 
 /**
+ * The menu the app ships: one heading holding a lone entry, one heading grouping a branch and a
+ * leaf. Both headings matter here — they are what the horizontal bar has to reshape.
+ */
+const APP_MENU: Menu[] = [
+  { text: 'منوی اصلی', group: true, children: [{ text: 'داشبورد', link: '/dashboard', icon: 'anticon-dashboard' }] },
+  {
+    text: 'ابزارها',
+    group: true,
+    children: [
+      {
+        text: 'صفحات خطا',
+        icon: 'anticon-warning',
+        children: [
+          { text: 'دسترسی غیرمجاز', link: '/exception/403' },
+          { text: 'صفحه یافت نشد', link: '/exception/404' }
+        ]
+      },
+      { text: 'قفل صفحه', link: '/passport/lock', icon: 'anticon-lock' }
+    ]
+  }
+];
+
+/**
  * Covers the one thing this component decides for itself: which shell the persisted layout mode
  * produces. The chrome inside `layout-default` belongs to @delon and is not re-tested here.
  */
@@ -23,7 +46,7 @@ describe('LayoutBasicComponent', () => {
   let host: HTMLElement;
 
   /** The mode is read in a field initialiser, so `localStorage` must be seeded before this runs. */
-  function boot(): void {
+  function boot(menu: Menu[] = APP_MENU): void {
     TestBed.configureTestingModule({
       providers: [
         ALAIN_SETTING_DEFAULT,
@@ -37,9 +60,7 @@ describe('LayoutBasicComponent', () => {
       ]
     });
 
-    TestBed.inject(MenuService).add([
-      { text: 'منوی اصلی', group: true, children: [{ text: 'داشبورد', link: '/dashboard', icon: 'anticon-dashboard' }] }
-    ]);
+    TestBed.inject(MenuService).add(menu);
 
     fixture = TestBed.createComponent(LayoutBasicComponent);
     host = fixture.nativeElement as HTMLElement;
@@ -67,7 +88,7 @@ describe('LayoutBasicComponent', () => {
     expect(host.querySelector('header-top-menu')).toBeTruthy();
   });
 
-  it('should render the menu entries in the horizontal bar', () => {
+  it('should render the top-level menu entries in the horizontal bar', () => {
     localStorage.setItem(STORAGE_KEY, 'top');
 
     boot();
@@ -76,7 +97,8 @@ describe('LayoutBasicComponent', () => {
       el.textContent?.trim()
     );
 
-    expect(entries).toEqual(['داشبورد']);
+    // "ابزارها" is a parent on the bar; its branch belongs in its dropdown, not alongside it.
+    expect(entries).toEqual(['داشبورد', 'ابزارها']);
   });
 
   it('should switch shells when the mode changes at runtime', () => {

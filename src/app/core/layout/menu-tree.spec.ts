@@ -86,15 +86,90 @@ describe('menu-tree', () => {
   });
 
   describe('toNavItems', () => {
-    it('should flatten the group level away', () => {
+    /** The real menu shape: one heading with a lone entry, one heading with a branch under it. */
+    function appMenu(): Menu[] {
+      return buildMenu([
+        { text: 'منوی اصلی', group: true, children: [{ text: 'داشبورد', link: '/dashboard' }] },
+        {
+          text: 'ابزارها',
+          group: true,
+          children: [
+            {
+              text: 'صفحات خطا',
+              children: [
+                { text: 'دسترسی غیرمجاز', link: '/exception/403' },
+                { text: 'صفحه یافت نشد', link: '/exception/404' }
+              ]
+            },
+            { text: 'قفل صفحه', link: '/passport/lock' }
+          ]
+        }
+      ]);
+    }
+
+    it('should keep a heading as a parent entry when it groups several children', () => {
+      const items = toNavItems(appMenu());
+
+      expect(items.map(i => i.text)).toEqual(['داشبورد', 'ابزارها']);
+      expect(items[1].children.map(c => c.text)).toEqual(['صفحات خطا', 'قفل صفحه']);
+    });
+
+    it('should preserve nesting below the first level instead of hoisting grandchildren', () => {
+      const tools = toNavItems(appMenu())[1];
+
+      // The branch stays a branch: a dropdown inside the "ابزارها" dropdown…
+      expect(tools.children[0].children.map(c => c.link)).toEqual(['/exception/403', '/exception/404']);
+      // …and its sibling leaf stays a sibling rather than coming loose onto the bar.
+      expect(tools.children[1].children).toEqual([]);
+      expect(tools.children[1].link).toBe('/passport/lock');
+    });
+
+    it('should promote a lone child rather than render a one-item dropdown', () => {
+      const items = toNavItems(buildMenu([{ text: 'منوی اصلی', group: true, children: [{ text: 'داشبورد', link: '/dashboard' }] }]));
+
+      expect(items.map(i => i.text)).toEqual(['داشبورد']);
+      expect(items[0].link).toBe('/dashboard');
+    });
+
+    it('should keep a top-level entry that is not a heading', () => {
+      const items = toNavItems(buildMenu([{ text: 'تنها', link: '/solo', group: false }]));
+
+      expect(items.map(i => i.link)).toEqual(['/solo']);
+    });
+
+    it('should omit a heading whose children are all hidden, since it opens onto nothing', () => {
       const items = toNavItems(
         buildMenu([
-          { text: 'الف', group: true, children: [{ text: 'a', link: '/a' }] },
-          { text: 'ب', group: true, children: [{ text: 'b', link: '/b' }] }
+          { text: 'خالی', group: true, children: [{ text: 'پنهان', link: '/hidden', hide: true }] },
+          { text: 'پنهان', group: true, hide: true, children: [{ text: 'a', link: '/a' }] },
+          { text: 'ابزارها', group: true, children: [{ text: 'b', link: '/b' }] }
         ])
       );
 
-      expect(items.map(i => i.link)).toEqual(['/a', '/b']);
+      expect(items.map(i => i.link)).toEqual(['/b']);
+    });
+
+    it('should omit hidden entries at every depth', () => {
+      const tools = toNavItems(
+        buildMenu([
+          {
+            text: 'ابزارها',
+            group: true,
+            children: [
+              {
+                text: 'صفحات خطا',
+                children: [
+                  { text: 'دیده می‌شود', link: '/a' },
+                  { text: 'پنهان', link: '/b', hide: true }
+                ]
+              },
+              { text: 'قفل صفحه', link: '/passport/lock' }
+            ]
+          }
+        ])
+      )[0];
+
+      expect(tools.children[0].children.map(c => c.link)).toEqual(['/a']);
     });
   });
 

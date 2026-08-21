@@ -6,6 +6,8 @@ import { NzDropDownModule } from 'ng-zorro-antd/dropdown';
 import { NzIconModule } from 'ng-zorro-antd/icon';
 import { NzMenuModule } from 'ng-zorro-antd/menu';
 
+import { HeaderTopMenuNodesComponent } from './top-menu-nodes.component';
+
 /**
  * Horizontal menu for the "top navigation" layout mode.
  *
@@ -14,9 +16,9 @@ import { NzMenuModule } from 'ng-zorro-antd/menu';
  * the header's white-on-blue treatment. An `nz-menu` would arrive with Ant's own light surface
  * and would have to be re-themed to look like it belongs.
  *
- * That component is flat, though, so entries with children are wrapped in an `nz-dropdown` here.
- * Only one level of dropdown is rendered — a horizontal bar is the wrong place for a deep tree,
- * and the sidebar mode exists for menus that need depth.
+ * That component is flat, so this template only owns the bar itself: one entry per top-level node,
+ * with a dropdown hung off the ones that have children. Everything below that first level is
+ * `header-top-menu-nodes`, which recurses to whatever depth the menu declares.
  */
 @Component({
   selector: 'header-top-menu',
@@ -39,14 +41,7 @@ import { NzMenuModule } from 'ng-zorro-antd/menu';
         </layout-default-top-menu-item>
         <nz-dropdown-menu #subMenu="nzDropdownMenu">
           <ul nz-menu>
-            @for (child of item.children; track child.text) {
-              <li nz-menu-item [nzSelected]="isActive(child)" [nzDisabled]="child.disabled" [routerLink]="child.link">
-                @if (child.icon; as icon) {
-                  <nz-icon [nzType]="icon.type" [nzTheme]="icon.theme" class="mr-sm" />
-                }
-                {{ child.text }}
-              </li>
-            }
+            <header-top-menu-nodes [nodes]="item.children" />
           </ul>
         </nz-dropdown-menu>
       } @else {
@@ -63,7 +58,7 @@ import { NzMenuModule } from 'ng-zorro-antd/menu';
     '[class.alain-default__top-menu]': 'true'
   },
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, LayoutDefaultModule, NzDropDownModule, NzMenuModule, NzIconModule]
+  imports: [RouterLink, LayoutDefaultModule, NzDropDownModule, NzMenuModule, NzIconModule, HeaderTopMenuNodesComponent]
 })
 export class HeaderTopMenuComponent {
   private readonly nav = inject(NavMenuService);

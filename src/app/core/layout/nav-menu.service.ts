@@ -33,6 +33,6 @@ export class NavMenuService {
   /** Group headings with their entries — what the portal grid renders. */
   readonly groups = computed<NavGroup[]>(() => toNavGroups(this.menus()));
 
-  /** Entries with the group level flattened away — what the header menu renders. */
+  /** The tree with its nesting intact, top-level headings turned into parents — what the header menu renders. */
   readonly items = computed<NavNode[]>(() => toNavItems(this.menus()));
 }
