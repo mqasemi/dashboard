@@ -170,17 +170,11 @@ export class LayoutBasicComponent {
 
   readonly isTopMenu = this.layoutMode.isTopMenu;
 
-  /**
-   * In sidebar mode the logo block keeps its default width, which equals `@alain-default-aside-wd`
-   * so the logo lines up with the sidebar beneath it. Top mode has no sidebar to line up with, and
-   * a 200px gutter before the first menu entry reads as a mistake, so it is tightened.
-   */
   readonly options = computed<LayoutDefaultOptions>(() => ({
     logoExpanded: `./assets/logo-full.svg`,
     logoCollapsed: `./assets/logo.svg`,
     logoLink: this.layoutMode.startPage(),
-    hideAside: this.isTopMenu(),
-    logoFixWidth: this.isTopMenu() ? 140 : undefined
+    hideAside: this.isTopMenu()
   }));
 
   /** Mobile menu drawer; only reachable in top mode. */

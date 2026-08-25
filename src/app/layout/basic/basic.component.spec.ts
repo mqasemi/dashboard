@@ -93,9 +93,11 @@ describe('LayoutBasicComponent', () => {
 
     boot();
 
-    const entries = Array.from(host.querySelectorAll<HTMLElement>('header-top-menu .alain-default__top-menu-item')).map(el =>
-      el.textContent?.trim()
-    );
+    // Level 1 only: deeper levels live in body-level overlays, so a query under `header-top-menu`
+    // cannot accidentally pick up dropdown entries. A parent's label sits inside its title element.
+    const entries = Array.from(
+      host.querySelectorAll<HTMLElement>('header-top-menu li.ant-menu-item, header-top-menu li.ant-menu-submenu')
+    ).map(el => (el.querySelector('.ant-menu-submenu-title') ?? el).textContent?.replace(/\s+/g, ' ').trim());
 
     // "ابزارها" is a parent on the bar; its branch belongs in its dropdown, not alongside it.
     expect(entries).toEqual(['داشبورد', 'ابزارها']);
