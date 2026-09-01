@@ -1,3 +1,4 @@
+export * from './auth/index';
 export * from './i18n/index';
 export * from './layout/index';
 export * from './net/default.interceptor';

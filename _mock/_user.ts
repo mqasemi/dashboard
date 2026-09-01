@@ -22,6 +22,13 @@ interface MockUserQuery {
   no?: string;
 }
 
+/** Body of `POST /login/account` as sent by the login form. */
+interface MockLoginBody {
+  userName?: string;
+  password?: string;
+  captcha?: string;
+}
+
 const FIRST_NAMES = ['علی', 'زهرا', 'محمد', 'فاطمه', 'رضا', 'مریم', 'حسین', 'سارا', 'امیر', 'نگار'];
 const LAST_NAMES = ['محمدی', 'حسینی', 'رضایی', 'کریمی', 'موسوی', 'احمدی', 'صادقی', 'نوری', 'قاسمی', 'شریفی'];
 
@@ -94,15 +101,23 @@ export const USERS = {
     phone: '021-00000000'
   },
   'POST /user/avatar': 'ok',
+  // Captcha: a real API would return an image URL/base64/SVG of its own making; here the SVG is
+  // generated in this mock "server" and validated against the last issued code on login.
+  '/captcha': () => ({ image: issueCaptcha() }),
   'POST /login/account': (req: MockRequest) => {
-    const data = req.body;
+    const data = req.body as MockLoginBody;
+    if (!data.captcha || String(data.captcha).trim().toUpperCase() !== currentCaptcha) {
+      // Rotate the code on every failed attempt, exactly like a real captcha service
+      issueCaptcha();
+      return { msg: 'کد امنیتی نادرست است.' };
+    }
     if (!(data.userName === 'admin' || data.userName === 'user') || data.password !== 'ng-alain.com') {
-      return { msg: 'نام کاربری یا گذرواژه نامعتبر است (admin / ng-alain.com)' };
+      return { msg: 'نام کاربری یا گذرواژه نامعتبر است.' };
     }
     return {
       msg: 'ok',
       user: {
-        token: '123456789',
+        token: 'mock-jwt-token',
         name: data.userName,
         email: `${data.userName}@example.com`,
         id: 10000,
@@ -114,3 +129,72 @@ export const USERS = {
     msg: 'ok'
   }
 };
+
+/* ------------------------------------------------------------------ *
+ * Captcha simulation                                                  *
+ * ------------------------------------------------------------------ */
+
+/**
+ * The last code issued by `GET /captcha`. Mirrors the server-side session store a real captcha
+ * service keeps; every login attempt is checked against it and every failed attempt rotates it.
+ */
+let currentCaptcha = '';
+
+/** Unambiguous alphabet: no `O/0`, `I/1`, etc. */
+const CAPTCHA_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+const CAPTCHA_LENGTH = 4;
+const GLYPH_COLORS = ['#1890ff', '#13c2c2', '#722ed1', '#eb2f96', '#fa8c16'];
+const GLYPH_FONTS = ['Courier New', 'Georgia', 'Verdana', 'Tahoma'];
+
+function randomInt(min: number, max: number): number {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function pick<T>(items: T[]): T {
+  return items[randomInt(0, items.length - 1)];
+}
+
+/** Issues a fresh code, remembers it, and returns its distorted SVG rendering. */
+function issueCaptcha(): string {
+  let code = '';
+  for (let i = 0; i < CAPTCHA_LENGTH; i += 1) {
+    code += CAPTCHA_ALPHABET[randomInt(0, CAPTCHA_ALPHABET.length - 1)];
+  }
+  currentCaptcha = code;
+  return buildCaptchaSvg(code);
+}
+
+function buildCaptchaSvg(code: string): string {
+  const width = 120;
+  const height = 40;
+  const slot = width / (code.length + 1);
+
+  // Noise first so glyphs stay readable on top of it
+  let shapes = '';
+  for (let i = 0; i < 3; i += 1) {
+    shapes += `<line x1="${randomInt(0, width)}" y1="${randomInt(0, height)}" x2="${randomInt(0, width)}" y2="${randomInt(
+      0,
+      height
+    )}" stroke="#d9d9d9" stroke-width="1" opacity="0.8"/>`;
+  }
+  for (let i = 0; i < 14; i += 1) {
+    shapes += `<circle cx="${randomInt(0, width)}" cy="${randomInt(0, height)}" r="1" fill="#bfbfbf" opacity="0.5"/>`;
+  }
+
+  let glyphs = '';
+  [...code].forEach((char, i) => {
+    const x = Math.round(slot * (i + 1) + randomInt(-3, 3));
+    const y = Math.round(height / 2 + randomInt(-4, 4));
+    const rotate = randomInt(-22, 22);
+    const size = randomInt(20, 26);
+    glyphs += `<text x="${x}" y="${y}" font-family="${pick(GLYPH_FONTS)}" font-size="${size}" font-weight="700" fill="${pick(
+      GLYPH_COLORS
+    )}" text-anchor="middle" dominant-baseline="central" transform="rotate(${rotate} ${x} ${y})">${char}</text>`;
+  });
+
+  return (
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}">` +
+    `<rect width="${width}" height="${height}" fill="#fafafa"/>` +
+    `${shapes}${glyphs}</svg>`
+  );
+}

@@ -9,18 +9,29 @@
   }
 
   .wrap {
+    display: flex;
     flex: 1;
+    flex-direction: column;
     padding: 32px 0;
+  }
+
+  /* The auto margins split the viewport's free space evenly above the header and below the
+     footer, so the header + card + footer group sits centred vertically on tall screens and
+     falls back to normal top-aligned flow on short ones. */
+  .top {
+    margin-block-start: auto;
+    text-align: center;
+  }
+
+  /* stylelint-disable-next-line selector-type-no-unknown -- host tag of @delon/abc/global-footer */
+  global-footer {
+    margin-block-end: auto;
   }
 
   .ant-form-item {
     display: flex;
     justify-content: space-between;
     margin-bottom: 24px;
-  }
-
-  .top {
-    text-align: center;
   }
 
   .header {

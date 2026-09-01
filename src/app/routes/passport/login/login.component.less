@@ -1,71 +1,105 @@
 @import '@delon/theme/index';
 
+@card-padding: 40px 32px;
+@card-radius: 8px;
+
 :host {
   display: block;
   width: 368px;
-  margin: 0 auto;
+  max-width: calc(100vw - 40px);
+  margin-inline: auto;
 
-  ::ng-deep {
-    .ant-tabs .ant-tabs-bar {
-      margin-bottom: 24px;
-      border-bottom: 0;
-      text-align: center;
-    }
+  .login-card {
+    padding: @card-padding;
+    border: 1px solid rgb(5 5 5 / 6%);
+    border-radius: @card-radius;
+    background: #fff;
+    box-shadow:
+      0 6px 16px -8px rgb(0 0 0 / 8%),
+      0 9px 28px rgb(0 0 0 / 5%);
+  }
 
-    .ant-tabs-tab {
-      font-size: 16px;
-      line-height: 24px;
-    }
+  .login-error {
+    margin-bottom: 24px;
+  }
 
-    .ant-input-affix-wrapper .ant-input:not(:first-child) {
-      padding-inline-start: 4px;
-    }
+  .password-toggle {
+    cursor: pointer;
+    color: @text-color-secondary;
+    transition: color 0.3s;
 
-    .icon {
-      cursor: pointer;
-      margin-inline-start: 16px;
-      font-size: 24px;
-      color: rgb(0 0 0 / 20%);
-      vertical-align: middle;
-      transition: color 0.3s;
-
-      &:hover {
-        color: @primary-color;
-      }
-    }
-
-    .other {
-      margin-top: 24px;
-      line-height: 22px;
-      text-align: start;
-
-      nz-tooltip {
-        vertical-align: middle;
-      }
-
-      /* Pushed to the trailing edge; `float` has no logical keyword with broad support yet,
-         so the RTL case is handled by the override below. */
-      .register {
-        float: right;
-      }
+    &:hover {
+      color: @primary-color;
     }
   }
-}
 
-[dir='rtl'] {
-  :host ::ng-deep .other .register {
-    float: left;
+  .captcha-row {
+    display: flex;
+    gap: 8px;
+    align-items: stretch;
+
+    nz-input-group {
+      flex: 1 1 auto;
+      min-width: 0;
+    }
   }
-}
 
-[data-theme='dark'] {
-  :host ::ng-deep {
-    .icon {
-      color: rgb(255 255 255 / 20%);
+  /* Rendered as `<button>` for keyboard accessibility; strip the chrome back to an image box */
+  .captcha-box {
+    cursor: pointer;
+    user-select: none;
+    overflow: hidden;
+    display: block;
+    flex: 0 0 120px;
+    height: 40px;
+    padding: 0;
+    border: 1px solid @border-color-base;
+    border-radius: @border-radius-base;
+    background: #fff;
+    transition: border-color 0.3s;
 
-      &:hover {
-        color: #fff;
-      }
+    &:hover,
+    &:focus-visible {
+      border-color: @primary-color;
+    }
+
+    &:focus-visible {
+      outline: none;
+    }
+  }
+
+  .captcha-image {
+    display: block;
+    height: 100%;
+
+    svg {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+  }
+
+  .captcha-loading {
+    color: @text-color-secondary;
+  }
+
+  .submit-item {
+    margin-top: 8px;
+  }
+
+  .demo-hint {
+    margin-top: 24px;
+    margin-bottom: 0;
+    font-size: @font-size-sm;
+    color: @text-color-secondary;
+    text-align: center;
+
+    .credential {
+      padding: 1px 6px;
+      border: 1px solid #f0f0f0;
+      border-radius: 4px;
+      font-size: @font-size-sm;
+      background: #fafafa;
     }
   }
 }

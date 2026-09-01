@@ -1,194 +1,101 @@
-import { HttpContext } from '@angular/common/http';
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, inject } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
-import { StartupService } from '@core';
-import { ReuseTabService } from '@delon/abc/reuse-tab';
-import { ALLOW_ANONYMOUS, DA_SERVICE_TOKEN, SocialOpenType, SocialService } from '@delon/auth';
-import { SettingsService, _HttpClient } from '@delon/theme';
-import { environment } from '@env/environment';
-import { PersianDigitsPipe } from '@shared';
+import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { Router } from '@angular/router';
+import { AuthService, AuthError } from '@core';
+import { DA_SERVICE_TOKEN } from '@delon/auth';
 import { NzAlertModule } from 'ng-zorro-antd/alert';
 import { NzButtonModule } from 'ng-zorro-antd/button';
-import { NzCheckboxModule } from 'ng-zorro-antd/checkbox';
 import { NzFormModule } from 'ng-zorro-antd/form';
 import { NzIconModule } from 'ng-zorro-antd/icon';
 import { NzInputModule } from 'ng-zorro-antd/input';
-import { NzTabChangeEvent, NzTabsModule } from 'ng-zorro-antd/tabs';
-import { NzToolTipModule } from 'ng-zorro-antd/tooltip';
-import { finalize } from 'rxjs';
+import { NzTooltipModule } from 'ng-zorro-antd/tooltip';
+
+const DEFAULT_ERROR_MESSAGE = 'ورود ناموفق بود؛ لطفاً دوباره تلاش کنید.';
 
 @Component({
   selector: 'passport-login',
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.less'],
-  providers: [SocialService],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
-    RouterLink,
-    ReactiveFormsModule,
-    NzCheckboxModule,
-    NzTabsModule,
-    NzAlertModule,
-    NzFormModule,
-    NzInputModule,
-    NzButtonModule,
-    NzToolTipModule,
-    NzIconModule,
-    PersianDigitsPipe
-  ]
+  imports: [ReactiveFormsModule, NzAlertModule, NzFormModule, NzInputModule, NzButtonModule, NzIconModule, NzTooltipModule]
 })
-export class UserLoginComponent implements OnDestroy {
+export class UserLoginComponent implements OnInit {
+  private readonly fb = inject(NonNullableFormBuilder);
   private readonly router = inject(Router);
-  private readonly settingsService = inject(SettingsService);
-  private readonly socialService = inject(SocialService);
-  private readonly reuseTabService = inject(ReuseTabService, { optional: true });
+  private readonly auth = inject(AuthService);
   private readonly tokenService = inject(DA_SERVICE_TOKEN);
-  private readonly startupSrv = inject(StartupService);
-  private readonly http = inject(_HttpClient);
-  private readonly cdr = inject(ChangeDetectorRef);
+  private readonly sanitizer = inject(DomSanitizer);
+  private readonly destroyRef = inject(DestroyRef);
 
-  form = inject(FormBuilder).nonNullable.group({
-    userName: ['', [Validators.required, Validators.pattern(/^(admin|user)$/)]],
-    password: ['', [Validators.required, Validators.pattern(/^(ng-alain\.com)$/)]],
-    mobile: ['', [Validators.required, Validators.pattern(/^09\d{9}$/)]],
-    captcha: ['', [Validators.required]],
-    remember: [true]
+  form = this.fb.group({
+    userName: ['', [Validators.required]],
+    password: ['', [Validators.required]],
+    captcha: ['', [Validators.required]]
   });
-  error = '';
-  type = 0;
-  loading = false;
 
-  count = 0;
-  interval$?: ReturnType<typeof setInterval>;
+  /** Last error returned by the API; rendered as a dismissible alert above the form. */
+  readonly error = signal<string | null>(null);
+  /** Trusted SVG markup of the current captcha image. */
+  readonly captchaSvg = signal<SafeHtml | null>(null);
+  readonly passwordVisible = signal(false);
+  /** Exposed for the template; the spinner state lives in the service so it survives navigation. */
+  readonly submitting = this.auth.submitting;
 
-  switch({ index }: NzTabChangeEvent): void {
-    this.type = index!;
+  ngOnInit(): void {
+    this.loadCaptcha();
   }
 
-  getCaptcha(): void {
-    const mobile = this.form.controls.mobile;
-    if (mobile.invalid) {
-      mobile.markAsDirty({ onlySelf: true });
-      mobile.updateValueAndValidity({ onlySelf: true });
-      return;
-    }
-    this.count = 59;
-    this.interval$ = setInterval(() => {
-      this.count -= 1;
-      if (this.count <= 0) {
-        clearInterval(this.interval$);
-      }
-    }, 1000);
+  togglePasswordVisibility(): void {
+    this.passwordVisible.update(visible => !visible);
+  }
+
+  reloadCaptcha(): void {
+    this.form.controls.captcha.reset();
+    this.loadCaptcha();
   }
 
   submit(): void {
-    this.error = '';
-    if (this.type === 0) {
-      const { userName, password } = this.form.controls;
-      userName.markAsDirty();
-      userName.updateValueAndValidity();
-      password.markAsDirty();
-      password.updateValueAndValidity();
-      if (userName.invalid || password.invalid) {
-        return;
-      }
-    } else {
-      const { mobile, captcha } = this.form.controls;
-      mobile.markAsDirty();
-      mobile.updateValueAndValidity();
-      captcha.markAsDirty();
-      captcha.updateValueAndValidity();
-      if (mobile.invalid || captcha.invalid) {
-        return;
-      }
+    if (this.submitting()) {
+      return;
+    }
+    const controls = [this.form.controls.userName, this.form.controls.password, this.form.controls.captcha];
+    for (const control of controls) {
+      control.markAsDirty({ onlySelf: true });
+      control.updateValueAndValidity({ onlySelf: true });
+    }
+    if (this.form.invalid) {
+      return;
     }
 
-    // By default every HTTP request has its user token validated (https://ng-alain.com/auth/getting-started).
-    // The login request itself must not be validated, hence `ALLOW_ANONYMOUS`.
-    this.loading = true;
-    this.cdr.detectChanges();
-    this.http
-      .post(
-        '/login/account',
-        {
-          type: this.type,
-          userName: this.form.value.userName,
-          password: this.form.value.password
-        },
-        null,
-        {
-          context: new HttpContext().set(ALLOW_ANONYMOUS, true)
-        }
-      )
-      .pipe(
-        finalize(() => {
-          this.loading = false;
-          this.cdr.detectChanges();
-        })
-      )
-      .subscribe(res => {
-        if (res.msg !== 'ok') {
-          this.error = res.msg;
-          this.cdr.detectChanges();
-          return;
-        }
-        // Reset the route-reuse cache
-        this.reuseTabService?.clear();
-        // Persist the user token
-        // TODO: Mock expired value
-        res.user.expired = +new Date() + 1000 * 60 * 5;
-        this.tokenService.set(res.user);
-        // Reload StartupService: app data is always assumed to depend on the current user's scope
-        this.startupSrv.load().subscribe(() => {
-          let url = this.tokenService.referrer!.url || '/';
-          if (url.includes('/passport')) {
-            url = '/';
-          }
-          this.router.navigateByUrl(url);
-        });
+    this.error.set(null);
+    this.auth.login(this.form.getRawValue()).subscribe({
+      next: () => this.navigateAfterLogin(),
+      error: (err: unknown) => {
+        this.error.set(err instanceof AuthError ? err.message : DEFAULT_ERROR_MESSAGE);
+        // The mock (like any real captcha service) rotates the code after a failed attempt
+        this.reloadCaptcha();
+      }
+    });
+  }
+
+  private loadCaptcha(): void {
+    this.auth
+      .refreshCaptcha()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: svg => this.captchaSvg.set(this.sanitizer.bypassSecurityTrustHtml(svg)),
+        // The box stays clickable so the user can simply try again
+        error: () => this.captchaSvg.set(null)
       });
   }
 
-  open(type: string, openType: SocialOpenType = 'href'): void {
-    let url = ``;
-    let callback = ``;
-    if (environment.production) {
-      callback = `https://ng-alain.github.io/ng-alain/#/passport/callback/${type}`;
-    } else {
-      callback = `http://localhost:4200/#/passport/callback/${type}`;
+  private navigateAfterLogin(): void {
+    let url = this.tokenService.referrer?.url || '/';
+    if (url.includes('/passport')) {
+      url = '/';
     }
-    switch (type) {
-      case 'auth0':
-        url = `//cipchk.auth0.com/login?client=8gcNydIDzGBYxzqV0Vm1CX_RXH-wsWo5&redirect_uri=${decodeURIComponent(callback)}`;
-        break;
-      case 'github':
-        url = `//github.com/login/oauth/authorize?client_id=9d6baae4b04a23fcafa2&response_type=code&redirect_uri=${decodeURIComponent(
-          callback
-        )}`;
-        break;
-    }
-    if (openType === 'window') {
-      this.socialService
-        .login(url, '/', {
-          type: 'window'
-        })
-        .subscribe(res => {
-          if (res) {
-            this.settingsService.setUser(res);
-            this.router.navigateByUrl('/');
-          }
-        });
-    } else {
-      this.socialService.login(url, '/', {
-        type: 'href'
-      });
-    }
-  }
-
-  ngOnDestroy(): void {
-    if (this.interval$) {
-      clearInterval(this.interval$);
-    }
+    void this.router.navigateByUrl(url);
   }
 }

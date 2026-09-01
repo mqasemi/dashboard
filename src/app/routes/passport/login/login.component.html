@@ -1,73 +1,79 @@
-<form nz-form [formGroup]="form" (ngSubmit)="submit()" role="form">
-  <nz-tabs [nzAnimated]="false" class="tabs" (nzSelectChange)="switch($event)">
-    <nz-tab [nzTitle]="'نام کاربری'">
-      @if (error) {
-        <nz-alert [nzType]="'error'" [nzMessage]="error" [nzShowIcon]="true" class="mb-lg" />
-      }
-      <nz-form-item>
-        <nz-form-control nzErrorTip="نام کاربری را وارد کنید (admin یا user)">
-          <nz-input-group nzSize="large" nzPrefixIcon="user">
-            <input nz-input formControlName="userName" class="ltr-text" placeholder="نام کاربری: admin یا user" />
+<div class="login-card">
+  @if (error(); as err) {
+    <nz-alert nzType="error" [nzMessage]="err" nzShowIcon nzCloseable class="login-error" (nzOnClose)="error.set(null)" />
+  }
+  <form nz-form [formGroup]="form" (ngSubmit)="submit()" role="form">
+    <nz-form-item>
+      <nz-form-control nzErrorTip="نام کاربری را وارد کنید.">
+        <nz-input-group nzSize="large" nzPrefixIcon="user">
+          <input nz-input formControlName="userName" class="ltr-text" autocomplete="username" placeholder="نام کاربری" />
+        </nz-input-group>
+      </nz-form-control>
+    </nz-form-item>
+
+    <nz-form-item>
+      <nz-form-control nzErrorTip="گذرواژه را وارد کنید.">
+        <nz-input-group nzSize="large" nzPrefixIcon="lock" [nzSuffix]="passwordSuffix">
+          <input
+            nz-input
+            [type]="passwordVisible() ? 'text' : 'password'"
+            formControlName="password"
+            class="ltr-text"
+            autocomplete="current-password"
+            placeholder="گذرواژه"
+          />
+        </nz-input-group>
+      </nz-form-control>
+    </nz-form-item>
+    <ng-template #passwordSuffix>
+      <nz-icon
+        role="button"
+        tabindex="-1"
+        class="password-toggle"
+        [nzType]="passwordVisible() ? 'eye-invisible' : 'eye'"
+        (click)="togglePasswordVisibility()"
+      />
+    </ng-template>
+
+    <nz-form-item>
+      <nz-form-control nzErrorTip="کد امنیتی را وارد کنید.">
+        <div class="captcha-row">
+          <nz-input-group nzSize="large" nzPrefixIcon="safety-certificate">
+            <input
+              nz-input
+              formControlName="captcha"
+              class="ltr-text"
+              autocomplete="off"
+              maxlength="4"
+              placeholder="کد امنیتی"
+            />
           </nz-input-group>
-        </nz-form-control>
-      </nz-form-item>
-      <nz-form-item>
-        <nz-form-control nzErrorTip="گذرواژه را وارد کنید (ng-alain.com)">
-          <nz-input-group nzSize="large" nzPrefixIcon="lock">
-            <input nz-input type="password" formControlName="password" class="ltr-text" placeholder="گذرواژه: ng-alain.com" />
-          </nz-input-group>
-        </nz-form-control>
-      </nz-form-item>
-    </nz-tab>
-    <nz-tab [nzTitle]="'تلفن همراه'">
-      <nz-form-item>
-        <nz-form-control [nzErrorTip]="mobileErrorTip">
-          <nz-input-group nzSize="large" nzPrefixIcon="mobile">
-            <input nz-input formControlName="mobile" class="ltr-text" placeholder="۰۹۱۲۳۴۵۶۷۸۹" />
-          </nz-input-group>
-          <ng-template #mobileErrorTip let-i>
-            @if (i.errors.required) {
-              شمارهٔ تلفن همراه را وارد کنید.
+          <button
+            type="button"
+            class="captcha-box"
+            nz-tooltip
+            nzTooltipTitle="برای دریافت کد جدید کلیک کنید"
+            (click)="reloadCaptcha()"
+          >
+            @if (captchaSvg(); as svg) {
+              <span class="captcha-image" [innerHTML]="svg"></span>
+            } @else {
+              <nz-icon nzType="sync" nzSpin class="captcha-loading" />
             }
-            @if (i.errors.pattern) {
-              شمارهٔ تلفن همراه معتبر نیست (مثال: ۰۹۱۲۳۴۵۶۷۸۹).
-            }
-          </ng-template>
-        </nz-form-control>
-      </nz-form-item>
-      <nz-form-item>
-        <nz-form-control [nzErrorTip]="'کد تأیید را وارد کنید.'">
-          <nz-row [nzGutter]="8">
-            <nz-col [nzSpan]="16">
-              <nz-input-group nzSize="large" nzPrefixIcon="mail">
-                <input nz-input formControlName="captcha" class="ltr-text" placeholder="کد تأیید" />
-              </nz-input-group>
-            </nz-col>
-            <nz-col [nzSpan]="8">
-              <button type="button" nz-button nzSize="large" (click)="getCaptcha()" [disabled]="count >= 0" nzBlock [nzLoading]="loading">
-                {{ count ? (count + ' ثانیه' | persianDigits) : 'دریافت کد' }}
-              </button>
-            </nz-col>
-          </nz-row>
-        </nz-form-control>
-      </nz-form-item>
-    </nz-tab>
-  </nz-tabs>
-  <nz-form-item>
-    <nz-col [nzSpan]="12">
-      <label nz-checkbox formControlName="remember">مرا به خاطر بسپار</label>
-    </nz-col>
-    <nz-col [nzSpan]="12" class="text-right">
-      <a class="forgot" routerLink="/passport/register">گذرواژه را فراموش کرده‌اید؟</a>
-    </nz-col>
-  </nz-form-item>
-  <nz-form-item>
-    <button nz-button type="submit" nzType="primary" nzSize="large" [nzLoading]="loading" nzBlock>ورود</button>
-  </nz-form-item>
-</form>
-<div class="other">
-  ورود با
-  <nz-icon nz-tooltip nzTooltipTitle="ورود با Auth0 در پنجرهٔ جدید" (click)="open('auth0', 'window')" nzType="safety-certificate" class="icon" />
-  <nz-icon nz-tooltip nzTooltipTitle="ورود با GitHub" (click)="open('github')" nzType="github" class="icon" />
-  <a class="register" routerLink="/passport/register">ثبت‌نام</a>
+          </button>
+        </div>
+      </nz-form-control>
+    </nz-form-item>
+
+    <nz-form-item class="submit-item">
+      <button nz-button type="submit" nzType="primary" nzSize="large" nzBlock [nzLoading]="submitting()">ورود</button>
+    </nz-form-item>
+  </form>
+
+  <p class="demo-hint">
+    حساب آزمایشی:
+    <span class="ltr-text credential">admin</span>
+    /
+    <span class="ltr-text credential">ng-alain.com</span>
+  </p>
 </div>
